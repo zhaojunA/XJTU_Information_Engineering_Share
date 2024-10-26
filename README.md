@@ -23,6 +23,9 @@
 ### 第十四条 学生应当自觉维护学校的教学秩序，遵守学校的教学管理规定。扰乱教育教学秩序者，视其情节轻重给予下列处分：
 * （五）在公开发表的学术论文、报告、设计中或在提交的学位论文、课程设计、毕业设计中，存在抄袭、篡改、伪造等学术不端行为，情节较轻且认识态度端正者，给予留校察看处分，情节严重者，给予开除学籍处分; 购买、出售或者组织买卖、由他人代写、替他人代写或组织代写学术论文、学位论文、课程设计、毕业设计者，给予开除学籍处分；
 ---
+## 使用指南
+* 您可以下载全部文件到本地，也可以使用[gitzip插件](https://microsoftedge.microsoft.com/addons/detail/gitzip-for-github/nlgkiabjnbdndgblhcaobimbpifcdkjj)(此插件网址为edge浏览器下，其余浏览器例如chorme也有类似插件)来下载某个或某几个文件或文件夹。
+---
 ## 相关类似工作
 * [西安交通大学课程资料共享计划](https://github.com/Bright-Hsu/XJTU-Share)
 * [浙江大学课程攻略共享计划](https://github.com/QSCTech/zju-icicles)
