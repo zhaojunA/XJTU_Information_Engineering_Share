@@ -1,0 +1,55 @@
+Turbo Assembler	 Version 5.0	    03-23-23 09:36:45	    Page 1
+radEA56B.ASM
+
+
+
+      1	0000			     DATA SEGMENT
+      2	0000  FFFF			     XL	     DW	 0FFFFH	     ;X低16位
+      3	0002  FFE0			     XH	     DW	 0FFE0H	     ;X高16位
+      4	0004  0FFF			     YL	     DW	 00FFFH	     ;Y低16位
+      5	0006  FF01			     YH	     DW	 0FF01H	     ;Y高16位
+      6	0008			     DATA ENDS
+      7
+      8	0000			     CODE SEGMENT
+      9					     ASSUME CS:CODE,DS:DATA
+     10	0000  B8 0000s		     START:MOV AX,DATA
+     11	0003  8E D8			     MOV DS,AX
+     12
+     13	0005  A1 0000r			     MOV AX,XL		     ;X低16位移到AX
+     14	0008  03 06 0004r		     ADD AX,YL		     ;低16位无符号数相加
+     15	000C  BF 3600			     MOV DI,3600H    ;偏移地址送给DI
+     16	000F  89 05			     MOV [DI],AX	     ;已经计算的低16位结果送给3600H、3601H
+     17
+     18	0011  A1 0002r			     MOV AX,XH		     ;X高16位移到AX
+     19	0014  13 06 0006r		     ADC AX,YH		     ;高16位相加，视作带进位的相加，可能有进位、溢出等
+     20	0018  BF 3602			     MOV DI,3602H    ;低16位相加存入之后偏移地址已经+2
+     21	001B  89 05			     MOV [DI],AX	     ;高16位结果送给3602H、3603H
+     22	001D			     CODE    ENDS
+     23					     END  START
+Turbo Assembler	 Version 5.0	    03-23-23 09:36:45	    Page 2
+Symbol Table
+
+
+
+
+Symbol Name			  Type	 Value
+
+??DATE				  Text	 "03-23-23"
+??FILENAME			  Text	 "radEA56B"
+??TIME				  Text	 "09:36:45"
+??VERSION			  Number 0500
+@CPU				  Text	 0101H
+@CURSEG				  Text	 CODE
+@FILENAME			  Text	 RADEA56B
+@WORDSIZE			  Text	 2
+START				  Near16 CODE:0000
+XH				  Word	 DATA:0002
+XL				  Word	 DATA:0000
+YH				  Word	 DATA:0006
+YL				  Word	 DATA:0004
+
+Groups & Segments		  Bit Size Align  Combine Class
+
+CODE				  16  001D Para	  none
+DATA				  16  0008 Para	  none
+

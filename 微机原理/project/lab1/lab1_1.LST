@@ -1,0 +1,42 @@
+Turbo Assembler	 Version 5.0	    03-27-23 21:38:34	    Page 1
+radB3919.ASM
+
+
+
+      1	0000			     CODE    SEGMENT	      ;在内存指定单元建立十进制数
+      2						 ASSUME	CS:CODE
+      3						 ORG 2000H	     ;程序起始地址
+      4	2000  BF 3500		     START:  MOV DI,3500H     ;设数据区首址
+      5	2003  B9 0010			     MOV CX,0010H    ;字节数→ CX
+      6	2006  B8 0000			     MOV AX,0000     ; 0000 → AX
+      7	2009  88 05		     CNT:    MOV [DI],AL     ;（AL）→ [DI]
+      8	200B  47			     INC DI	     ;修改地址指针
+      9	200C  04 01			     ADD AL,01	     ;修改数据
+     10	200E  27			     DAA	      ;十进制调整
+     11	200F  E2 F8			     LOOP CNT	      ;未填完，继续
+     12	2011  EB FE			     JMP $	      ;填完，结束
+     13	2013			     CODE    ENDS
+     14					     END  START
+Turbo Assembler	 Version 5.0	    03-27-23 21:38:34	    Page 2
+Symbol Table
+
+
+
+
+Symbol Name			  Type	 Value
+
+??DATE				  Text	 "03-27-23"
+??FILENAME			  Text	 "radB3919"
+??TIME				  Text	 "21:38:34"
+??VERSION			  Number 0500
+@CPU				  Text	 0101H
+@CURSEG				  Text	 CODE
+@FILENAME			  Text	 RADB3919
+@WORDSIZE			  Text	 2
+CNT				  Near16 CODE:2009
+START				  Near16 CODE:2000
+
+Groups & Segments		  Bit Size Align  Combine Class
+
+CODE				  16  2013 Para	  none
+

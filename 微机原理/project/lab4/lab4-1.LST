@@ -1,0 +1,45 @@
+Turbo Assembler	 Version 5.0	    04-20-23 20:09:25	    Page 1
+rad8FF12.ASM
+
+
+
+      1	      =0283		     io8254a	     equ 283h	     ;控制口
+      2	      =0280		     io8254b	     equ 280h	     ;计数器0的地址
+      3	      =0281		     io8254c	     equ 281h	     ;计数器1的地址
+      4	0000			     code segment
+      5					     assume cs:code
+      6	0000			     start:
+      7	0000  B0 14			     mov     al,14h  ;设置8254通道0为工作方式2,二进制计数
+      8	0002  BA 0283			     mov     dx,io8254a
+      9	0005  EE			     out     dx,al
+     10	0006  BA 0280			     mov     dx,io8254b	     ;送计数初值为08H
+     11	0009  B0 08			     mov     al,8H
+     12	000B  EE			     out     dx,al
+     13
+     14	000C			     code ends
+     15					     end start
+Turbo Assembler	 Version 5.0	    04-20-23 20:09:25	    Page 2
+Symbol Table
+
+
+
+
+Symbol Name			  Type	 Value
+
+??DATE				  Text	 "04-20-23"
+??FILENAME			  Text	 "rad8FF12"
+??TIME				  Text	 "20:09:25"
+??VERSION			  Number 0500
+@CPU				  Text	 0101H
+@CURSEG				  Text	 CODE
+@FILENAME			  Text	 RAD8FF12
+@WORDSIZE			  Text	 2
+IO8254A				  Number 0283
+IO8254B				  Number 0280
+IO8254C				  Number 0281
+START				  Near16 CODE:0000
+
+Groups & Segments		  Bit Size Align  Combine Class
+
+CODE				  16  000C Para	  none
+

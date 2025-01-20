@@ -1,0 +1,56 @@
+Turbo Assembler	 Version 5.0	    04-20-23 19:58:24	    Page 1
+rad52E4D.ASM
+
+
+
+      1	      =0280		     io8254a	     equ 280h		     ;计数器0的地址
+      2	      =0281		     io8254b	     equ 281h		     ;计数器1的地址
+      3	      =0283		     io8254c	     equ 283h		     ;控制口地址
+      4	0000			     code segment
+      5					     assume cs:code
+      6	0000			     start:
+      7	0000  BA 0283			     mov     dx,io8254c		     ;向8254写控制字
+      8	0003  B0 36			     mov     al,36h	     ;设置80540通道为工作方式3，先低后高传送计数器
+      9	0005  EE			     out     dx,al
+     10	0006  B8 03E8			     mov     ax,1000		     ;写入循环计数初值1000
+     11	0009  BA 0280			     mov     dx,io8254a
+     12	000C  EE			     out     dx,al	     ;先写入低字节
+     13	000D  8A C4			     mov     al,ah
+     14	000F  EE			     out     dx,al	     ;后写入高字节
+     15	0010  BA 0283			     mov     dx,io8254c
+     16	0013  B0 76			     mov     al,76h	     ;设8254通道1工作方式，先低后高传送计数器值
+     17	0015  EE			     out     dx,al
+     18	0016  B8 03E8			     mov     ax,1000		     ;写入循环计数初值1000
+     19	0019  BA 0281			     mov     dx,io8254b
+     20	001C  EE			     out     dx,al	     ;先写低字节
+     21	001D  8A C4			     mov     al,ah
+     22	001F  EE			     out     dx,al	     ;后写高字节
+     23	0020  B4 4C			     mov     ah,4ch	     ;程序退出
+     24	0022  CD 21			     int     21h
+     25	0024			     code ends
+     26					     end start
+Turbo Assembler	 Version 5.0	    04-20-23 19:58:24	    Page 2
+Symbol Table
+
+
+
+
+Symbol Name			  Type	 Value
+
+??DATE				  Text	 "04-20-23"
+??FILENAME			  Text	 "rad52E4D"
+??TIME				  Text	 "19:58:24"
+??VERSION			  Number 0500
+@CPU				  Text	 0101H
+@CURSEG				  Text	 CODE
+@FILENAME			  Text	 RAD52E4D
+@WORDSIZE			  Text	 2
+IO8254A				  Number 0280
+IO8254B				  Number 0281
+IO8254C				  Number 0283
+START				  Near16 CODE:0000
+
+Groups & Segments		  Bit Size Align  Combine Class
+
+CODE				  16  0024 Para	  none
+

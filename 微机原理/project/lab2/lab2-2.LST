@@ -1,0 +1,114 @@
+Turbo Assembler	 Version 5.0	    04-10-23 10:06:47	    Page 1
+radA442A.ASM
+
+
+
+      1	0000			     DSEG SEGMENT
+      2	0000  06 F2 5A F4 97 64	BB+	     ARY     DB	06H,0F2H,5AH,0F4H,97H,64H,0BBH,7FH,0FH,0D8H  ;数据值
+      3	      7F 0F D8
+      4	000A  000A			     N	     DW	10							     ;数据量为10
+      5	000C  ??			     MAX     DB	?							     ;用于存放最大值
+      6	000D  4D 41 58 3D 0D 0A	24	     KEY     DB	'MAX=',0DH,0AH,'$'
+      7	0014			     DSEG ENDS									     ;数据段结束
+      8
+      9	0000			     CSEG SEGMENT
+     10					     ASSUME CS:CSEG,DS:DSEG
+     11	0000			     START:
+     12	0000  B8 0000s			     MOV     AX,DSEG
+     13	0003  8E D8			     MOV     DS,AX
+     14	0005  8B 0E 000Ar		     MOV     CX,N			     ;内循环次数送给CX，初始值为N-1
+     15	0009  49			     DEC     CX				     ;CX自减
+     16	000A  BE 4000			     MOV     SI,4000H			     ;偏移地址送给SI
+     17	000D  8B F9		     L1:     MOV     DI,CX			     ;内循环次数存在DI中，初始值为CX-1
+     18	000F  BB 0000			     MOV     BX,0
+     19	0012  8A 87 0000r	     L2:     MOV  AL,ARY[BX]	      ;地址指针预设值为0
+     20	0016  98			     CBW		      ;符号扩展
+     21	0017  B4 00			     MOV  AH,0		      ;将符号位清零，只保留数值部分
+     22	0019  3A 87 0001r		     CMP  AL,ARY[BX+1]	      ;相邻两数据比较，由于数位8位，因此地址值+1即可
+     23	001D  7C 08			     JL	 COTINUE	     ;若两数比较符合排序，则跳转到CONTINUE
+     24	001F  86 87 0001r		     XCHG AL,ARY[BX+1]	      ;否则，将两数交换
+     25	0023  88 87 0000r		     MOV  ARY[BX],AL	      ;ARY当前位置存较大的数
+     26	0027			     COTINUE:
+     27	0027  83 C3 01			     ADD     BX,1			     ;修改地址指针
+     28	002A  E2 E6			     LOOP    L2
+     29					     ;内循环结束
+     30	002C  8A 87 0000r		     MOV     AL,ARY[BX]			     ;暂时保存
+     31	0030  24 7F			     AND     AL,7FH		     ;将符号位清零，只保留数值部分
+     32	0032  88 04			     MOV     [SI],AL		     ;在偏移地址SI处储存当前的最小值
+     33	0034  46			     INC     SI				     ;字节操作，SI+1
+     34
+     35	0035  8B CF			     MOV     CX,DI
+     36	0037  E2 D4			     LOOP    L1
+     37					     ;外循环结束
+     38
+     39	0039  BA 000Dr			     LEA     DX,KEY		     ;字符串起始地址送给DX
+     40	003C  B4 09			     MOV     AH,09H		     ;字符串显示功能
+     41	003E  CD 21			     INT     21H			     ;显示字符串'MAX='
+     42
+     43	0040  A0 0009r			     MOV     AL,ARY[9]			     ;将最大值送给AL
+     44	0043  D0 E8 D0 E8 D0 E8	D0+	     SHR     AL,4			     ;取出高4位
+     45	      E8
+     46	004B  E8 0018			     CALL    one_hex_to_ascii		     ;将高4位转换为ASCII码
+     47	004E  B4 02			     MOV     AH,02H		     ;功能号02H，显示字符
+     48	0050  8A D0			     MOV     DL,AL			     ;要显示的字符的ASCII码存入DL
+     49	0052  CD 21			     INT     21H			     ;DOS调用
+     50
+     51	0054  A0 0009r			     MOV     AL,ARY[9]			     ;取出16进制数
+     52	0057  24 0F			     AND     AL,0FH		     ;取出低4位
+     53	0059  E8 000A			     CALL    one_hex_to_ascii		     ;将低4位转换为ASCII码
+     54	005C  B4 02			     MOV     AH,02H		     ;功能号02H，显示字符
+     55	005E  8A D0			     MOV     DL,AL			     ;要显示的字符的ASCII码存入DL
+     56	0060  CD 21			     INT     21H			     ;DOS调用
+     57
+Turbo Assembler	 Version 5.0	    04-10-23 10:06:47	    Page 2
+radA442A.ASM
+
+
+
+     58	0062  B4 4C			     MOV     AH,4CH		     ;功能号送AH
+     59	0064  CD 21			     INT     21H			     ;返回DOS
+     60
+     61				     ;输入: AL为1位16进制数
+     62				     ;输出: AL为对应的ASCII码
+     63	0066			     one_hex_to_ascii:
+     64	0066  3C 0A			     CMP     AL,0AH		     ;判断是否小于10
+     65	0068  7C 02			     JL	     one_hex_digit ;如果小于10，跳转到处理一位数字的情况
+     66	006A  04 07			     ADD     AL,07H		     ;将大于10的16进制数转换为对应的大写字母
+     67	006C			     one_hex_digit:
+     68	006C  04 30			     ADD     AL,'0'  ;将数字转换为对应的ASCII码
+     69	006E  C3			     RET
+     70
+     71	006F			     CSEG ENDS
+     72					     END START
+Turbo Assembler	 Version 5.0	    04-10-23 10:06:47	    Page 3
+Symbol Table
+
+
+
+
+Symbol Name			  Type	 Value
+
+??DATE				  Text	 "04-10-23"
+??FILENAME			  Text	 "radA442A"
+??TIME				  Text	 "10:06:47"
+??VERSION			  Number 0500
+@CPU				  Text	 0101H
+@CURSEG				  Text	 CSEG
+@FILENAME			  Text	 RADA442A
+@WORDSIZE			  Text	 2
+ARY				  Byte	 DSEG:0000
+COTINUE				  Near16 CSEG:0027
+KEY				  Byte	 DSEG:000D
+L1				  Near16 CSEG:000D
+L2				  Near16 CSEG:0012
+MAX				  Byte	 DSEG:000C
+N				  Word	 DSEG:000A
+ONE_HEX_DIGIT			  Near16 CSEG:006C
+ONE_HEX_TO_ASCII		  Near16 CSEG:0066
+START				  Near16 CSEG:0000
+
+Groups & Segments		  Bit Size Align  Combine Class
+
+CSEG				  16  006F Para	  none
+DSEG				  16  0014 Para	  none
+

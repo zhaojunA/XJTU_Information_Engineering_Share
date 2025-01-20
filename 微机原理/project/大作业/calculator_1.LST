@@ -1,0 +1,342 @@
+Turbo Assembler	 Version 5.0	    05-15-23 22:01:55	    Page 1
+rad3D449.ASM
+
+
+
+      1				     ;--------------------------------------------------------------------------------
+      2				     ;程序描述：
+      3				     ;	     可实现多项式Z=(X+Y)*8/2在10位数以内的运算，不考虑除法溢出问题
+      4				     ;作者：周帆
+      5				     ;时间：2023年5月13日
+      6				     ;输入格式样例：
+      7				     ;	     运行程序后，从键盘输入X的数值X=12，按下回车之后，从键盘输入Y的数值Y=34
+      8				     ;	     系统运算得到运算式的结果并显示在屏幕上
+      9				     ;调试工具：
+     10				     ;	     HQFC-A微机接口
+     11				     ;说明：无
+     12				     ;--------------------------------------------------------------------------------
+     13				     CRLF	     MACRO				     ;显示回车和换行
+     14						     MOV AH,02H
+     15						     MOV DL,0DH
+     16						     INT 21H
+     17						     MOV AH,02H
+     18						     MOV DL,0AH
+     19						     INT 21H
+     20						     ENDM
+     21	0000			     STACK1  SEGMENT
+     22	0000  0100*(??)			     DB	256 DUP(?)
+     23	0100			     STACK1  ENDS
+     24	0000			     DATA	     SEGMENT
+     25	0000  0A*(??)				     VX	DB   10	DUP(?)			     ;预置变量X,Y,Z的存储空间
+     26	000A  0A*(??)				     VY	DB 10 DUP(?)
+     27	0014  0C*(??)				     VR	DB 12 DUP(?)		     ;中间变量
+     28	0020  0D*(??)				     VZ	DB 13 DUP(?)
+     29	002D  32*(2B) 0D 0A 24			     SSE DB 50 DUP('+'),0DH,0AH,'$';交互界面分隔
+     30	0062  50 6F 6C 79 6E 6F	6D+		     SPO DB 'Polynomial:Z=(X+Y)*8/2',0DH,0AH,'$';提示用户默认的多项式运算
+     31	      69 61 6C 3A 5A 3D	28+
+     32	      58 2B 59 29 2A 38	2F+
+     33	      32 0D 0A 24
+     34	007B  58 3D 0D 0A 24			     SVX DB 'X=',0DH,0AH,'$'	     ;提示用户输入X
+     35	0080  59 3D 0D 0A 24			     SVY DB 'Y=',0DH,0AH,'$'	     ;提示用户输入Y
+     36	0085  5A 3D 0D 0A 24			     SVZ DB 'Z=',0DH,0AH,'$'	     ;输入结果Z
+     37	008A			     DATA	     ENDS
+     38	0000			     CODE	     SEGMENT
+     39					     ASSUME CS:CODE,DS:DATA
+     40	0000  B8 0000s		     START:  MOV AX,DATA			     ;数据段
+     41	0003  8E D8				     MOV DS,AX
+     42	0005  B8 0000s				     MOV AX,STACK1		     ;栈段
+     43	0008  8E D0				     MOV SS,AX
+     44	000A  B4 09				     MOV AH,09H				     ;显示分割线
+     45	000C  BA 002Dr				     LEA DX,SSE
+     46	000F  CD 21				     INT 21H
+     47	0011  B4 09				     MOV AH,09H				     ;显示运算式
+     48	0013  BA 0062r				     LEA DX,SPO
+     49	0016  CD 21				     INT 21H
+     50						     ;输入变量X,并逆序存入数据段
+     51	0018  B4 09				     MOV AH,09H				     ;提示用户输入变量X
+     52	001A  BA 007Br				     LEA DX,SVX
+     53	001D  CD 21				     INT 21H
+     54	001F  BB 0000				     MOV BX,0				     ;统计字节长
+     55	0022  B9 000A				     MOV CX,10				     ;设置循环次数上限
+     56	0025  BE 0000r				     LEA SI,VX				     ;指针指向变量存储首地址
+     57	0028  B4 08		     LIX1:	     MOV AH,08H				     ;逐字输入
+Turbo Assembler	 Version 5.0	    05-15-23 22:01:55	    Page 2
+rad3D449.ASM
+
+
+
+     58	002A  CD 21				     INT 21H
+     59	002C  3C 0D				     CMP AL,0DH				     ;检测，输入回车符表示输入完成
+     60	002E  74 0C				     JZ	JIENDX				     ;完成，跳转
+     61	0030  8A D0				     MOV DL,AL				     ;显示
+     62	0032  B4 02				     MOV AH,02H
+     63	0034  CD 21				     INT 21H
+     64	0036  2C 30				     SUB AL,30H				     ;将ASCII码转换为十进制数，方便运算
+     65	0038  50				     PUSH AX			     ;入栈
+     66	0039  43				     INC BX			     ;计数
+     67	003A  E2 EC				     LOOP LIX1
+     68	003C			     JIENDX: CRLF
+1    69	003C  B4 02				     MOV AH,02H
+1    70	003E  B2 0D				     MOV DL,0DH
+1    71	0040  CD 21				     INT 21H
+1    72	0042  B4 02				     MOV AH,02H
+1    73	0044  B2 0A				     MOV DL,0AH
+1    74	0046  CD 21				     INT 21H
+     75	0048  8B CB				     MOV CX,BX				     ;设置循环次数为字节长
+     76	004A  58		     LIX2:	     POP AX			     ;出栈
+     77	004B  88 04				     MOV [SI],AL			     ;未完成，则将字符存入
+     78	004D  46				     INC SI			     ;指针步进
+     79	004E  E2 FA				     LOOP LIX2
+     80						     ;输入变量Y,并逆序存入数据段
+     81	0050  B4 09				     MOV AH,09H				     ;提示用户输入变量Y
+     82	0052  BA 0080r				     LEA DX,SVY
+     83	0055  CD 21				     INT 21H
+     84	0057  BB 0000				     MOV BX,0				     ;统计字节长
+     85	005A  B9 000A				     MOV CX,10				     ;设置循环次数上限
+     86	005D  BE 000Ar				     LEA SI,VY				     ;指针指向变量存储首地址
+     87	0060  B4 08		     LIY1:	     MOV AH,08H				     ;逐字输入
+     88	0062  CD 21				     INT 21H
+     89	0064  3C 0D				     CMP AL,0DH				     ;检测，输入回车符表示输入完成
+     90	0066  74 0C				     JZ	JIENDY				     ;完成，跳转
+     91	0068  8A D0				     MOV DL,AL				     ;显示
+     92	006A  B4 02				     MOV AH,02H
+     93	006C  CD 21				     INT 21H
+     94	006E  2C 30				     SUB AL,30H				     ;将ASCII码转换为十进制数，方便运算
+     95	0070  50				     PUSH AX			     ;入栈
+     96	0071  43				     INC BX			     ;计数
+     97	0072  E2 EC				     LOOP LIY1
+     98	0074			     JIENDY: CRLF
+1    99	0074  B4 02				     MOV AH,02H
+1   100	0076  B2 0D				     MOV DL,0DH
+1   101	0078  CD 21				     INT 21H
+1   102	007A  B4 02				     MOV AH,02H
+1   103	007C  B2 0A				     MOV DL,0AH
+1   104	007E  CD 21				     INT 21H
+    105	0080  8B CB				     MOV CX,BX				     ;设置循环次数为字节长
+    106	0082  58		     LIY2:	     POP AX			     ;出栈
+    107	0083  88 04				     MOV [SI],AL			     ;未完成，则将字符存入
+    108	0085  46				     INC SI			     ;指针步进
+    109	0086  E2 FA				     LOOP LIY2
+    110						     ;计算及输出
+    111	0088  E8 0010				     CALL CADD				     ;加法计算
+    112	008B  E8 0039				     CALL CMUL				     ;乘法计算
+    113	008E  E8 0060				     CALL CDIV				     ;除法计算
+    114	0091  E8 0089				     CALL TRANS				     ;结果转换为ASCII码
+Turbo Assembler	 Version 5.0	    05-15-23 22:01:55	    Page 3
+rad3D449.ASM
+
+
+
+    115	0094  E8 009E				     CALL ORESULT		     ;输出计算结果
+    116	0097  B4 4C				     MOV AH,4CH
+    117	0099  CD 21				     INT 21H
+    118
+    119	009B			     CADD	     PROC NEAR				     ;加法计算子程序
+    120	009B  56				     PUSH SI			     ;保护现场
+    121	009C  57				     PUSH DI
+    122	009D  53				     PUSH BX
+    123	009E  51				     PUSH CX
+    124	009F  50				     PUSH AX
+    125	00A0  BE 0000r				     LEA SI,VX				     ;指针SI指向变量X首地址
+    126	00A3  BF 000Ar				     LEA DI,VY				     ;指针DI指向变量Y首地址
+    127	00A6  BB 0014r				     LEA BX,VR				     ;指针BX指向变量R首地址
+    128	00A9  B9 000A				     MOV CX,10				     ;设置循环次数
+    129	00AC  33 C0				     XOR AX,AX				     ;AX清零
+    130	00AE  F8				     CLC
+    131	00AF  8A 04		     LADD:	     MOV AL,[SI]			     ;逐位相加
+    132	00B1  12 05				     ADC AL,[DI]
+    133	00B3  37				     AAA
+    134	00B4  88 07				     MOV [BX],AL			     ;存入结果
+    135	00B6  46				     INC SI			     ;指针步进
+    136	00B7  47				     INC DI
+    137	00B8  43				     INC BX
+    138	00B9  E2 F4				     LOOP LADD
+    139	00BB  73 04				     JNC JEND
+    140	00BD  C7 07 0001			     MOV [BX],01H		     ;进位计入
+*Warning* rad3D449.ASM(125) Argument needs type	override
+    141	00C1  58		     JEND:	     POP AX			     ;恢复现场
+    142	00C2  59				     POP CX
+    143	00C3  5B				     POP BX
+    144	00C4  5F				     POP DI
+    145	00C5  5E				     POP SI
+    146	00C6  C3				     RET
+    147	00C7			     CADD	     ENDP
+    148
+    149	00C7			     CMUL	     PROC NEAR				     ;乘法计算子程序
+    150	00C7  52				     PUSH DX			     ;保护现场
+    151	00C8  56				     PUSH SI
+    152	00C9  53				     PUSH BX
+    153	00CA  51				     PUSH CX
+    154	00CB  50				     PUSH AX
+    155	00CC  B2 08				     MOV DL,08H				     ;乘数
+    156	00CE  BE 0014r				     LEA SI,VR				     ;指针SI指向变量R首地址
+    157	00D1  B3 00				     MOV BL,00H				     ;存放进位
+    158	00D3  B9 000C				     MOV CX,12				     ;设置循环次数
+    159	00D6  F8				     CLC
+    160	00D7  8A 04		     LMUL:	     MOV AL,[SI]
+    161	00D9  F6 E2				     MUL DL			     ;逐位相乘
+    162	00DB  D4 0A				     AAM
+    163	00DD  02 C3				     ADD AL,BL				     ;加入进位
+    164	00DF  37				     AAA
+    165	00E0  88 04				     MOV [SI],AL			     ;结果低四位存入AL
+    166	00E2  8A DC				     MOV BL,AH				     ;进位存入BL
+    167	00E4  33 C0				     XOR AX,AX				     ;AX清零
+    168	00E6  46				     INC SI			     ;指针步进
+    169	00E7  E2 EE				     LOOP LMUL
+    170	00E9  88 1C				     MOV [SI],BL			     ;存入进位
+Turbo Assembler	 Version 5.0	    05-15-23 22:01:55	    Page 4
+rad3D449.ASM
+
+
+
+    171	00EB  58				     POP AX			     ;恢复现场
+    172	00EC  59				     POP CX
+    173	00ED  5B				     POP BX
+    174	00EE  5E				     POP SI
+    175	00EF  5A				     POP DX
+    176	00F0  C3				     RET
+    177	00F1			     CMUL	     ENDP
+    178
+    179	00F1			     CDIV	     PROC NEAR				     ;除法计算子程序
+    180	00F1  52				     PUSH DX			     ;保护现场
+    181	00F2  57				     PUSH DI
+    182	00F3  56				     PUSH SI
+    183	00F4  50				     PUSH AX
+    184	00F5  51				     PUSH CX
+    185	00F6  B2 02				     MOV DL,02H				     ;存入除数
+    186	00F8  BF 0020r				     LEA DI,VZ				     ;指针DI指向变量Z首地址
+    187	00FB  BE 0020r				     LEA SI,VZ				     ;指针SI指向变量R末地址
+    188	00FE  4E				     DEC SI
+    189	00FF  8A 24				     MOV AH,[SI]			     ;AH装入
+    190	0101  B0 00				     MOV AL,00H				     ;AL清零
+    191	0103  4E				     DEC SI
+    192	0104  47				     INC DI
+    193	0105  B9 000B				     MOV CX,11				     ;设置循环次数			    +
+    194				     (将第0、1位装入AX，避免除法溢出）
+    195	0108  F8				     CLC
+    196	0109  8A 04		     LDIV:	     MOV AL,[SI]			     ;取出变量Z的字节
+    197	010B  D5 0A				     AAD
+    198	010D  F6 F2				     DIV DL			     ;逐位相除
+    199	010F  88 05				     MOV [DI],AL			     ;结果低四位存入AL
+    200	0111  32 C0				     XOR AL,AL				     ;AL清零
+    201	0113  4E				     DEC SI			     ;指针步退
+    202	0114  47				     INC DI			     ;指针步进
+    203	0115  E2 F2				     LOOP LDIV
+    204	0117  59				     POP CX			     ;恢复现场
+    205	0118  58				     POP AX
+    206	0119  5E				     POP SI
+    207	011A  5F				     POP DI
+    208	011B  5A				     POP DX
+    209	011C  C3				     RET
+    210	011D			     CDIV	     ENDP
+    211
+    212	011D			     TRANS	     PROC NEAR				     ;将加法计算结果转换为ASCII码
+    213	011D  56				     PUSH SI			     ;保护现场
+    214	011E  50				     PUSH AX
+    215	011F  BE 0020r				     LEA SI,VZ				     ;指针指向存储首地址
+    216	0122  B9 000C				     MOV CX,12				     ;设置循环次数
+    217	0125  8A 04		     LTRANS: MOV AL,[SI]
+    218	0127  04 30				     ADD AL,30H
+    219	0129  88 04				     MOV [SI],AL
+    220	012B  46				     INC SI			     ;指针步进
+    221	012C  E2 F7				     LOOP LTRANS
+    222	012E  C7 04 0024			     MOV [SI],'$'		     ;字符串结束标识符存入
+*Warning* rad3D449.ASM(206) Argument needs type	override
+    223	0132  58				     POP AX			     ;恢复现场
+    224	0133  5E				     POP SI
+    225	0134  C3				     RET
+    226	0135			     TRANS	     ENDP
+Turbo Assembler	 Version 5.0	    05-15-23 22:01:55	    Page 5
+rad3D449.ASM
+
+
+
+    227
+    228	0135			     ORESULT PROC NEAR				     ;将计算结果输出到屏幕
+    229	0135  50				     PUSH AX			     ;保护现场
+    230	0136  52				     PUSH DX
+    231	0137  B4 09				     MOV AH,09H				     ;提示输出结果
+    232	0139  BA 0085r				     LEA DX,SVZ
+    233	013C  CD 21				     INT 21H
+    234	013E  B9 000C				     MOV CX,12				     ;设置循环次数
+    235	0141  BE 0020r				     LEA SI,VZ				     ;指针指向结果Z
+    236	0144  8A 14		     LO:	     MOV DL,[SI]
+    237	0146  B4 02				     MOV AH,02H				     ;输出结果
+    238	0148  CD 21				     INT 21H
+    239	014A  46				     INC SI			     ;指针步进
+    240	014B  E2 F7				     LOOP LO
+    241						     CRLF
+1   242	014D  B4 02				     MOV AH,02H
+1   243	014F  B2 0D				     MOV DL,0DH
+1   244	0151  CD 21				     INT 21H
+1   245	0153  B4 02				     MOV AH,02H
+1   246	0155  B2 0A				     MOV DL,0AH
+1   247	0157  CD 21				     INT 21H
+    248	0159  5A				     POP DX			     ;恢复现场
+    249	015A  58				     POP AX
+    250	015B  C3				     RET
+    251	015C			     ORESULT ENDP
+    252
+    253	015C			     CODE	     ENDS
+    254						     END START
+Turbo Assembler	 Version 5.0	    05-15-23 22:01:55	    Page 6
+Symbol Table
+
+
+
+
+Symbol Name			  Type	 Value
+
+??DATE				  Text	 "05-15-23"
+??FILENAME			  Text	 "rad3D449"
+??TIME				  Text	 "22:01:55"
+??VERSION			  Number 0500
+@CPU				  Text	 0101H
+@CURSEG				  Text	 CODE
+@FILENAME			  Text	 RAD3D449
+@WORDSIZE			  Text	 2
+CADD				  Near16 CODE:009B
+CDIV				  Near16 CODE:00F1
+CMUL				  Near16 CODE:00C7
+JEND				  Near16 CODE:00C1
+JIENDX				  Near16 CODE:003C
+JIENDY				  Near16 CODE:0074
+LADD				  Near16 CODE:00AF
+LDIV				  Near16 CODE:0109
+LIX1				  Near16 CODE:0028
+LIX2				  Near16 CODE:004A
+LIY1				  Near16 CODE:0060
+LIY2				  Near16 CODE:0082
+LMUL				  Near16 CODE:00D7
+LO				  Near16 CODE:0144
+LTRANS				  Near16 CODE:0125
+ORESULT				  Near16 CODE:0135
+SPO				  Byte	 DATA:0062
+SSE				  Byte	 DATA:002D
+START				  Near16 CODE:0000
+SVX				  Byte	 DATA:007B
+SVY				  Byte	 DATA:0080
+SVZ				  Byte	 DATA:0085
+TRANS				  Near16 CODE:011D
+VR				  Byte	 DATA:0014
+VX				  Byte	 DATA:0000
+VY				  Byte	 DATA:000A
+VZ				  Byte	 DATA:0020
+
+Macro Name
+
+CRLF
+
+Groups & Segments		  Bit Size Align  Combine Class
+
+CODE				  16  015C Para	  none
+DATA				  16  008A Para	  none
+STACK1				  16  0100 Para	  none
+Turbo Assembler	 Version 5.0	    05-15-23 22:01:55	    Page 7
+Error Summary
+
+
+
+*Warning* rad3D449.ASM(125) Argument needs type	override
+*Warning* rad3D449.ASM(206) Argument needs type	override
+

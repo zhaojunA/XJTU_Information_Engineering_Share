@@ -1,0 +1,57 @@
+Turbo Assembler	 Version 5.0	    04-18-23 20:01:32	    Page 1
+radA1F64.ASM
+
+
+
+      1	0000			     data segment
+      2	      =0280			     io8255a equ     280h
+      3	      =0282			     io8255c equ     282h
+      4	      =0283			     cotl8255	     equ   283h
+      5	0000			     data ends
+      6
+      7	0000			     code segment
+      8					     assume cs:code
+      9	0000			     start:
+     10	0000  B8 0000s			     mov ax,data
+     11	0003  8E D8			     mov ds,ax
+     12	0005  8E C0			     mov es,ax
+     13	0007			     main:
+     14	0007  BA 0283			     mov dx,cotl8255	     ;设置C口为输入口，A口为输出口
+     15	000A  B0 90			     mov al,90h			     ;控制字
+     16	000C  EE			     out dx,al
+     17	000D			     inout:
+     18	000D  BA 0280			     mov dx,io8255a	     ;从A口输入一数据
+     19	0010  EC			     in	 al,dx			     ;数据存放到AL中
+     20	0011  BA 0282			     mov dx,io8255c	     ;从C口读取一个数据
+     21	0014  EE			     out dx,al			     ;将读取的数据输出
+     22	0015  EB F6			     jmp inout			     ;若无，则继续从C口输入，从A口输出
+     23	0017			     code ends
+     24					     end start
+Turbo Assembler	 Version 5.0	    04-18-23 20:01:32	    Page 2
+Symbol Table
+
+
+
+
+Symbol Name			  Type	 Value
+
+??DATE				  Text	 "04-18-23"
+??FILENAME			  Text	 "radA1F64"
+??TIME				  Text	 "20:01:32"
+??VERSION			  Number 0500
+@CPU				  Text	 0101H
+@CURSEG				  Text	 CODE
+@FILENAME			  Text	 RADA1F64
+@WORDSIZE			  Text	 2
+COTL8255			  Number 0283
+INOUT				  Near16 CODE:000D
+IO8255A				  Number 0280
+IO8255C				  Number 0282
+MAIN				  Near16 CODE:0007
+START				  Near16 CODE:0000
+
+Groups & Segments		  Bit Size Align  Combine Class
+
+CODE				  16  0017 Para	  none
+DATA				  16  0000 Para	  none
+

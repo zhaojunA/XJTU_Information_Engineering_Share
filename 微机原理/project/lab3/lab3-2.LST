@@ -1,0 +1,83 @@
+Turbo Assembler	 Version 5.0	    04-18-23 20:43:50	    Page 1
+radBD960.ASM
+
+
+
+      1	0000			     data segment
+      2	      =028A			     io8255a	     equ   28ah
+      3	      =028B			     cotl8255	     equ   28bh
+      4	0000  24 44 04 44 04 44	04	     state   db	     24h,44h,04h,44h,04h,44h,04h     ;南北绿灯，东西红灯，之后黄灯闪烁
+      5	0007  81 82 80 82 80 82	80			     db	     81h,82h,80h,82h,80h,82h,80h				    +
+      6				     ;南北红灯，东西绿灯，之后黄灯闪烁
+      7	000E  FF					     db	     0ffh				     ;结束
+      8	000F			     data ends
+      9
+     10	0000			     code segment
+     11					     assume cs:code,ds:data
+     12	0000			     start:
+     13	0000  B8 0000s			     mov     ax,data
+     14	0003  8E D8			     mov     ds,ax
+     15	0005  BA 028B			     mov     dx,cotl8255
+     16	0008  B0 90			     mov     al,90h	     ;控制字90h
+     17	000A  EE			     out     dx,al	     ;设置8255为C口输出
+     18	000B  BA 028A			     mov     dx,io8255a
+     19	000E			     re_on:
+     20	000E  BB 0000			     mov     bx,0
+     21	0011			     on:
+     22	0011  8A 87 0000r		     mov     al,state[bx]
+     23	0015  3C FF			     cmp     al,0ffh
+     24	0017  74 F5			     jz	     re_on		     ;结束标识符到来跳转
+     25	0019  EE			     out     dx,al	     ;点亮相应的灯
+     26	001A  43			     inc     bx
+     27	001B  B9 0032			     mov     cx,50	     ;参数赋初值
+     28	001E  A8 21			     test    al,21h	     ;是否有绿灯亮
+     29	0020  74 03			     jz	     de1		     ;没有,短延时
+     30	0022  B9 03E8			     mov     cx,1000		     ;有,长延时
+     31	0025			     de1:
+     32	0025  BF 1770			     mov     di,6000		     ;di赋初值6000
+     33	0028			     de0:
+     34	0028  4F			     dec     di			     ;减1计数
+     35	0029  75 FD			     jnz     de0		     ;di不为0
+     36	002B  E2 F8			     loop    de1
+     37	002D  52			     push    dx
+     38	002E  B4 06			     mov     ah,06h
+     39	0030  B2 FF			     mov     dl,0ffh
+     40	0032  CD 21			     int     21h
+     41	0034  5A			     pop     dx			     ;返回系统
+     42	0035  74 DA			     jz	     on			     ;没有,转到on
+     43	0037			     exit:
+     44	0037  B4 4C			     mov     ah,4ch	     ;返回
+     45	0039  CD 21			     int     21h
+     46	003B			     code ends
+     47					     end start
+Turbo Assembler	 Version 5.0	    04-18-23 20:43:50	    Page 2
+Symbol Table
+
+
+
+
+Symbol Name			  Type	 Value
+
+??DATE				  Text	 "04-18-23"
+??FILENAME			  Text	 "radBD960"
+??TIME				  Text	 "20:43:50"
+??VERSION			  Number 0500
+@CPU				  Text	 0101H
+@CURSEG				  Text	 CODE
+@FILENAME			  Text	 RADBD960
+@WORDSIZE			  Text	 2
+COTL8255			  Number 028B
+DE0				  Near16 CODE:0028
+DE1				  Near16 CODE:0025
+EXIT				  Near16 CODE:0037
+IO8255A				  Number 028A
+ON				  Near16 CODE:0011
+RE_ON				  Near16 CODE:000E
+START				  Near16 CODE:0000
+STATE				  Byte	 DATA:0000
+
+Groups & Segments		  Bit Size Align  Combine Class
+
+CODE				  16  003B Para	  none
+DATA				  16  000F Para	  none
+

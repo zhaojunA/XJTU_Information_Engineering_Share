@@ -1,0 +1,230 @@
+Turbo Assembler	 Version 5.0	    05-15-23 21:57:12	    Page 1
+rad6B88D.ASM
+
+
+
+      1				     ;--------------------------------------------------------------------------------
+      2				     ;程序描述：
+      3				     ;	     通过入栈/出栈操作记录输入数据，实现两个数之间的加、减、乘、除运算，其中
+      4				     ;	     加法：两位加数、和范围均为：0~65536
+      5				     ;	     减法：被减数、减数、差范围均为：-32767~32767
+      6				     ;	     乘法：两位乘数、积范围均为：0~65536
+      7				     ;	     除法：被除数、除数、商、余数范围均为：0~32767
+      8				     ;	     '='--输出结果，'C'--归零
+      9				     ;作者：周帆
+     10				     ;日期：2023年5月13日
+     11				     ;输入格式样例：
+     12				     ;	     输入12+34=，自动计算结果并显示在运算时之后。结果自动显示46.
+     13				     ;	     进行下一次计算时，按下键盘C键确认模拟计算器清0，开始下一次计算
+     14				     ;调试工具：
+     15				     ;	     HQFC-A微机接口
+     16				     ;说明：无
+     17				     ;--------------------------------------------------------------------------------
+     18				     CRLF	     MACRO				     ;显示回车和换行
+     19						     MOV AH,02H
+     20						     MOV DL,0DH
+     21						     INT 21H
+     22						     MOV AH,02H
+     23						     MOV DL,0AH
+     24						     INT 21H
+     25						     ENDM
+     26	0000			     STACK1  SEGMENT
+     27	0000  0100*(??)			     DB	256 DUP(?)
+     28	0100			     STACK1  ENDS
+     29	0000			     DATA	     SEGMENT
+     30	0000  00 00 00 00 00 24			     RE	DB 0,0,0,0,0,'$'	     ;计算结果的ASCII码
+     31	0006  2710 03E8	0064 000A +		     DIVI DW 10000,1000,100,10,1     ;万、千、百、十、个
+     32	      0001
+     33	0010  06*(2E) 24			     SE	DB 6 DUP('.'),'$'	     ;除法间隔符
+     34	0017  32*(2B) 0D 0A 24			     SSE DB 50 DUP('+'),0DH,0AH,'$';交互界面分隔
+     35	004C  4D 79 20 43 61 6C	63+		     STIP DB 'My Calculator:',0DH,0AH,'$';提示用户输入计算式
+     36	      75 6C 61 74 6F 72	3A+
+     37	      0D 0A 24
+     38	005D			     DATA	     ENDS
+     39	0000			     CODE	     SEGMENT
+     40					     ASSUME CS:CODE,DS:DATA
+     41	0000  B8 0000s		     START:  MOV AX,DATA			     ;数据段
+     42	0003  8E D8				     MOV DS,AX
+     43	0005  B8 0000s				     MOV AX,STACK1		     ;栈段
+     44	0008  8E D0				     MOV SS,AX
+     45	000A  B4 09				     MOV AH,09H				     ;显示分割线
+     46	000C  BA 0017r				     LEA DX,SSE
+     47	000F  CD 21				     INT 21H
+     48	0011  B4 09				     MOV AH,09H				     ;显示提示词
+     49	0013  BA 004Cr				     LEA DX,STIP
+     50	0016  CD 21				     INT 21H
+     51	0018  33 C0		     REFRESH:	     XOR AX,AX				     ;AX清零
+     52	001A  E8 0066				     CALL INPUT				     ;输入第一个数
+     53	001D  53				     PUSH BX			     ;存入栈
+     54						     ;判断运算符，跳转
+     55	001E  3C 2B				     CMP AL,'+'
+     56	0020  74 0C				     JZ	CADD
+     57	0022  3C 2D				     CMP AL,'-'
+Turbo Assembler	 Version 5.0	    05-15-23 21:57:12	    Page 2
+rad6B88D.ASM
+
+
+
+     58	0024  74 11				     JZ	CSUB
+     59	0026  3C 2A				     CMP AL,'*'
+     60	0028  74 29				     JZ	CMUL
+     61	002A  3C 2F				     CMP AL,'/'
+     62	002C  74 2E				     JZ	CDIV
+     63	002E  E8 0052		     CADD:	     CALL INPUT				     ;输入第二个数
+     64	0031  58				     POP AX			     ;第一个数取出
+     65	0032  03 C3				     ADD AX,BX				     ;相加
+     66	0034  EB 44 90				     JMP NEXT				     ;跳出
+     67	0037  E8 0049		     CSUB:	     CALL INPUT				     ;输入第二个数
+     68	003A  58				     POP AX			     ;第一个数取出
+     69	003B  3B C3				     CMP AX,BX				     ;判断被减数与减数的大小关系
+     70	003D  7C 05				     JL	LESS			     ;小于，跳转
+     71	003F  2B C3				     SUB AX,BX				     ;大于，直接相减
+     72	0041  EB 37 90				     JMP NEXT
+     73	0044  2B C3		     LESS:	     SUB AX,BX				     ;相减为负则取反
+     74	0046  F7 D8				     NEG AX
+     75	0048  50				     PUSH AX			     ;保护AX
+     76	0049  B2 2D				     MOV DL,'-'				     ;输出负号
+     77	004B  B4 02				     MOV AH,02H
+     78	004D  CD 21				     INT 21H
+     79	004F  58				     POP AX			     ;送回AX
+     80	0050  EB 28 90				     JMP NEXT				     ;跳出
+     81	0053  E8 002D		     CMUL:	     CALL INPUT				     ;输入第二个数
+     82	0056  58				     POP AX			     ;第一个数取出
+     83	0057  F7 E3				     MUL BX			     ;相乘
+     84	0059  EB 1F 90				     JMP NEXT				     ;跳出
+     85	005C  E8 0024		     CDIV:	     CALL INPUT				     ;输入第二个数
+     86	005F  58				     POP AX			     ;第一个数取出
+     87	0060  F7 F3				     DIV BX			     ;相除
+     88	0062  83 FA 00				     CMP DX,0				     ;检测余数
+     89	0065  74 13				     JZ	NEXT			     ;直接跳出
+     90	0067  52				     PUSH DX			     ;保护DX
+     91	0068  E8 005A				     CALL OUTPUT			     ;输出商
+     92	006B  B4 09				     MOV AH,09H				     ;显示间隔符
+     93	006D  BA 0010r				     LEA DX,SE
+     94	0070  CD 21				     INT 21H
+     95	0072  5A				     POP DX			     ;送回DX
+     96	0073  8B C2				     MOV AX,DX				     ;输出余数
+     97	0075  E8 004D				     CALL OUTPUT
+     98	0078  EB 9E				     JMP REFRESH			     ;跳出，刷新
+     99	007A  E8 0048		     NEXT:	     CALL OUTPUT			     ;结果输出
+    100	007D  EB 99				     JMP REFRESH			     ;跳出，刷新
+    101	007F  B4 4C				     MOV AH,4CH
+    102	0081  CD 21				     INT 21H
+    103
+    104	0083			     INPUT	     PROC NEAR				     ;输入子程序
+    105	0083  BB 0000				     MOV BX,0				     ;记录已输入的数值，初始化BX清零
+    106	0086  B4 01		     INNUM:  MOV AH,01H				     ;字符输入
+    107	0088  CD 21				     INT 21H
+    108	008A  3C 43				     CMP AL,'C'				     ;归零跳转
+    109	008C  74 24				     JZ	CLEAR
+    110	008E  3C 2B				     CMP AL,'+'				     ;运算符跳出
+    111	0090  74 32				     JZ	EXIT
+    112	0092  3C 2D				     CMP AL,'-'
+    113	0094  74 2E				     JZ	EXIT
+    114	0096  3C 2A				     CMP AL,'*'
+Turbo Assembler	 Version 5.0	    05-15-23 21:57:12	    Page 3
+rad6B88D.ASM
+
+
+
+    115	0098  74 2A				     JZ	EXIT
+    116	009A  3C 2F				     CMP AL,'/'
+    117	009C  74 26				     JZ	EXIT
+    118	009E  2C 30				     SUB AL,30H				     ;ASCII码转换为十进制
+    119	00A0  7C 22				     JL	EXIT			     ;排除0~9以外的字符
+    120	00A2  3C 09				     CMP AL,9
+    121	00A4  7F 1E				     JG	EXIT
+    122	00A6  98				     CBW				     ;按数位依次将输入的运算数存入
+    123	00A7  93				     XCHG AX,BX				     ;已输入数值送入
+    124	00A8  B9 000A				     MOV CX,10				     ;十进制
+    125	00AB  F7 E1				     MUL CX			     ;十进制下左移一位
+    126	00AD  93				     XCHG AX,BX				     ;送回
+    127	00AE  03 D8				     ADD BX,AX				     ;当前输入位加入
+    128	00B0  EB D4				     JMP INNUM				     ;跳转输入下一位
+    129	00B2			     CLEAR:  CRLF				     ;回车换行
+1   130	00B2  B4 02				     MOV AH,02H
+1   131	00B4  B2 0D				     MOV DL,0DH
+1   132	00B6  CD 21				     INT 21H
+1   133	00B8  B4 02				     MOV AH,02H
+1   134	00BA  B2 0A				     MOV DL,0AH
+1   135	00BC  CD 21				     INT 21H
+    136	00BE  33 C0				     XOR AX,AX				     ;寄存器AX,BX清零
+    137	00C0  33 DB				     XOR BX,BX
+    138	00C2  EB C2				     JMP INNUM				     ;跳转输入下一位
+    139	00C4  C3		     EXIT:	     RET
+    140	00C5			     INPUT	     ENDP
+    141
+    142	00C5			     OUTPUT  PROC NEAR				     ;输出子程序
+    143	00C5  BE 0000r				     MOV SI,OFFSET RE			     ;指针
+    144	00C8  BF 0006r				     MOV DI,OFFSET DIVI
+    145	00CB  B9 0005				     MOV CX,5				     ;设置循环次数
+    146	00CE  BA 0000		     LTRANS: MOV DX,0				     ;DX清零,存储未转换数值
+    147	00D1  F7 35				     DIV WORD PTR [DI]			     ;位数
+    148	00D3  04 30				     ADD AL,30H				     ;十进制转换为ASCII码
+    149	00D5  88 04				     MOV BYTE PTR [SI],AL	     ;存储
+    150	00D7  46				     INC SI			     ;指针步进
+    151	00D8  83 C7 02				     ADD DI,2
+    152	00DB  8B C2				     MOV AX,DX				     ;未转换值送回
+    153	00DD  E2 EF				     LOOP LTRANS
+    154	00DF  BE 0000r				     MOV SI,OFFSET RE			     ;指针
+    155	00E2  B9 0004				     MOV CX,4				     ;设置循环次数
+    156	00E5  80 3C 30		     LPRINT: CMP BYTE PTR [SI],30H	     ;从第一个有效位开始输出
+    157	00E8  75 03				     JNZ PRINT
+    158	00EA  46				     INC SI			     ;指针步进
+    159	00EB  E2 F8				     LOOP LPRINT
+    160	00ED  8B D6		     PRINT:  MOV DX,SI				     ;计算结果输出
+    161	00EF  B4 09				     MOV AH,09H
+    162	00F1  CD 21				     INT 21H
+    163	00F3  C3				     RET
+    164	00F4			     OUTPUT  ENDP
+    165
+    166	00F4			     CODE	     ENDS
+    167						     END START
+Turbo Assembler	 Version 5.0	    05-15-23 21:57:12	    Page 4
+Symbol Table
+
+
+
+
+Symbol Name			  Type	 Value
+
+??DATE				  Text	 "05-15-23"
+??FILENAME			  Text	 "rad6B88D"
+??TIME				  Text	 "21:57:12"
+??VERSION			  Number 0500
+@CPU				  Text	 0101H
+@CURSEG				  Text	 CODE
+@FILENAME			  Text	 RAD6B88D
+@WORDSIZE			  Text	 2
+CADD				  Near16 CODE:002E
+CDIV				  Near16 CODE:005C
+CLEAR				  Near16 CODE:00B2
+CMUL				  Near16 CODE:0053
+CSUB				  Near16 CODE:0037
+DIVI				  Word	 DATA:0006
+EXIT				  Near16 CODE:00C4
+INNUM				  Near16 CODE:0086
+INPUT				  Near16 CODE:0083
+LESS				  Near16 CODE:0044
+LPRINT				  Near16 CODE:00E5
+LTRANS				  Near16 CODE:00CE
+NEXT				  Near16 CODE:007A
+OUTPUT				  Near16 CODE:00C5
+PRINT				  Near16 CODE:00ED
+RE				  Byte	 DATA:0000
+REFRESH				  Near16 CODE:0018
+SE				  Byte	 DATA:0010
+SSE				  Byte	 DATA:0017
+START				  Near16 CODE:0000
+STIP				  Byte	 DATA:004C
+
+Macro Name
+
+CRLF
+
+Groups & Segments		  Bit Size Align  Combine Class
+
+CODE				  16  00F4 Para	  none
+DATA				  16  005D Para	  none
+STACK1				  16  0100 Para	  none
+
